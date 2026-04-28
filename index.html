@@ -337,7 +337,7 @@
   <script>
     // ===================== CONFIG =====================
     // Apni Gemini API key yahan daalo — ek baar daalne ke baad setup screen nahi aayegi
-    const HARDCODED_API_KEY = "AIzaSyCj-bu4PLM8bYGiu9q2_0FGHcGO4OCDDN8";   // <-- yahan "AIza..." key paste karo
+    const HARDCODED_API_KEY = "AIzaSyDoYdiRDA-xvuTUXdxDAOftI8CuwKik19s";   // <-- yahan "AIza..." key paste karo
 
     let API_KEY = "";
     let status = "idle";
@@ -387,7 +387,7 @@
       document.getElementById("setupBtn").textContent = "Checking...";
       document.getElementById("setupBtn").disabled = true;
 
-      fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`, {
+      fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -531,8 +531,9 @@
       // Build conversation for Gemini
       const contents = [];
       
-      // Add system instruction as first user message context
-      for (const msg of chatHistory) {
+      // Only last 6 messages (3 turns) to save tokens
+      const recentHistory = chatHistory.slice(-6);
+      for (const msg of recentHistory) {
         contents.push({
           role: msg.role === "assistant" ? "model" : "user",
           parts: [{ text: msg.content }]
@@ -541,7 +542,7 @@
       contents.push({ role: "user", parts: [{ text: userText }] });
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -554,7 +555,13 @@
 
       const data = await response.json();
 
-      if (data.error) throw new Error(data.error.message);
+      if (response.status === 429) {
+        setError("Zyada requests ho gayi — 30 second mein automatically retry karega...");
+        await new Promise(r => setTimeout(r, 30000));
+        return getAIResponse(userText);
+      }
+
+      if (data.error) throw new Error("API Error " + data.error.code + ": " + data.error.message);
 
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text
         || "Sorry, samajh nahi aaya. Dobara boliye.";
