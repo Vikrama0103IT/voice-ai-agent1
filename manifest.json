@@ -2,7 +2,7 @@
   "name": "Voice AI Agent",
   "short_name": "Voice AI",
   "description": "Hindi & English Voice AI Assistant",
-  "start_url": "/index.html",
+  "start_url": "/voice-ai-agent1/index.html",
   "display": "standalone",
   "background_color": "#050510",
   "theme_color": "#050510",
